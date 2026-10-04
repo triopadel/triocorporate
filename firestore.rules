@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // A scorekeeper signs in as <username>@kinzapadel.com and is approved by a keepers/<username> document.
+    function isKeeper() {
+      return request.auth != null
+        && request.auth.token.email.matches('.*@kinzapadel[.]com$')
+        && exists(/databases/$(database)/documents/keepers/$(request.auth.token.email.split('@')[0]));
+    }
+
+    // Kinza (first tournament) used root collections. Keep them working.
+    match /matches/{id} { allow read: if true; allow write: if isKeeper(); }
+    match /groups/{id}  { allow read: if true; allow write: if isKeeper(); }
+
+    // Every newer tournament: tournaments/<slug>/matches, /groups, /config ...
+    match /tournaments/{slug}/{coll}/{id} { allow read: if true; allow write: if isKeeper(); }
+
+    // The approved list itself is never readable or writable from the sites.
+    match /keepers/{name} { allow read, write: if false; }
+  }
+}
