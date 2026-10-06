@@ -15,7 +15,15 @@ Data: `tournaments/triocorporate/matches`, `/groups`, `/config` (the rules doc).
 1. GitHub: create the organization `triopadel`, then a repo `triocorporate` inside it. Upload everything in this folder, then Settings → Pages → deploy from `main` / root.
 2. Firebase → Authentication → Settings → Authorized domains → add `triopadel.github.io`.
 3. Firestore → Rules: paste `firestore.rules` → Publish. (Kinza keeps working.)
-Keepers and logins are shared with Kinza, so nothing else to do in Firebase.
+4. Make yourself an admin (once, works for every tournament): Firestore → start collection `admins` → document ID = your Kinza username (e.g. `ahmad`), any field.
+   On the Trio site you sign in with your full login, e.g. `ahmad@kinzapadel.com`.
+
+## Trio scorekeepers (their own accounts, Trio only)
+- **Add:** Authentication → Add user `username@triocorporate.kinzapadel.com` + password.
+  Then Firestore → `tournaments` → `triocorporate` → collection `keepers` → document ID = the username (lowercase), any field (e.g. `name`).
+  They type just `username` on the Trio site.
+- **Remove:** delete their `keepers` document (edit rights stop at once), then delete the login.
+- Kinza scorekeepers can't edit Trio, and Trio scorekeepers can't edit Kinza.
 
 ## Running the tournament (signed in as scorekeeper)
 - **Groups tab → Add a group**: category, letter, one team per line, `Player + Player (Company)`.

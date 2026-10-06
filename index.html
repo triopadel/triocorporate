@@ -761,14 +761,15 @@ details.more[open] summary{margin-bottom:10px}
   function closeSheet() { keepAwake(false); S.open = null; S.gopen = null; $('#sheetRoot').innerHTML = ''; }
 
   const failToast = err => toast(err && err.code === 'permission-denied' ? 'This account is not on the scorekeeper list. Ask the organizer to add it.' : 'Could not save that change. Check the connection and try again.');
-  // Scorekeepers sign in with a username; Firebase needs an email, so the page adds a fixed domain.
-  const KEEPER_DOMAIN = 'kinzapadel.com';
+  // Scorekeepers sign in with a username; Firebase needs an email, so the page adds this tournament's own domain.
+  // Each tournament has its own accounts (ahmad@triocorporate.kinzapadel.com). Admins type their full login.
+  const KEEPER_DOMAIN = SLUG + '.kinzapadel.com';
   const loginId = u => { u = String(u).trim().toLowerCase(); return u.includes('@') ? u : u + '@' + KEEPER_DOMAIN; };
   function openLogin() {
     S.open = null;
     $('#sheetRoot').innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Scorekeeper sign in">
       <h3>Scorekeeper sign in<button class="x" data-act="close">Close</button></h3>
-      <p class="hint">Only scorekeepers need to sign in. Everyone else can watch without an account.</p>
+      <p class="hint">Only scorekeepers need to sign in. Everyone else can watch without an account. Organizers: type your full login.</p>
       <form id="loginf" class="form">
         <label class="full">Username<input id="l-email" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></label>
         <label class="full">Password<input id="l-pass" type="password" autocomplete="current-password" required></label>
