@@ -765,6 +765,15 @@ details.more[open] summary{margin-bottom:10px}
   // Each tournament has its own accounts (ahmad@triocorporate.kinzapadel.com). Admins type their full login.
   const KEEPER_DOMAIN = SLUG + '.kinzapadel.com';
   const loginId = u => { u = String(u).trim().toLowerCase(); return u.includes('@') ? u : u + '@' + KEEPER_DOMAIN; };
+  // Signing in only proves the password. This checks the account belongs to THIS tournament (or is an admin).
+  const NO_ACCESS = 'This account is not a scorekeeper for the Trio tournament.';
+  function checkAccess(u) {
+    const [name, dom] = String(u && u.email || '').toLowerCase().split('@');
+    const ref = dom === KEEPER_DOMAIN ? db.collection(`tournaments/${SLUG}/keepers`).doc(name)
+              : dom === 'kinzapadel.com' ? db.collection('admins').doc(name) : null;
+    if (!ref || !name) return Promise.resolve(false);
+    return ref.get({source: 'server'}).then(d => d.exists, e => e && e.code === 'permission-denied' ? false : !!user);
+  }
   function openLogin() {
     S.open = null;
     $('#sheetRoot').innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Scorekeeper sign in">
@@ -894,7 +903,10 @@ details.more[open] summary{margin-bottom:10px}
     if (e.target.id === 'loginf') {
       const btn = e.target.querySelector('button[type=submit]'); btn.disabled = true;
       auth.signInWithEmailAndPassword(loginId($('#l-email').value), $('#l-pass').value)
-        .then(() => { closeSheet(); S.keeper = true; render(); toast('Signed in. Tap a match to keep score.'); })
+        .then(cred => checkAccess(cred.user).then(ok => {
+          if (!ok) { auth.signOut(); btn.disabled = false; toast(NO_ACCESS); return; }
+          user = cred.user; closeSheet(); S.keeper = true; render(); toast('Signed in. Tap a match to keep score.');
+        }))
         .catch(err => { btn.disabled = false; toast(/password|credential|user-not-found/.test(err.code || '') ? 'Wrong username or password.' : err.code === 'auth/too-many-requests' ? 'Too many tries. Wait a minute and try again.' : 'Sign in failed. Check the connection.'); });
       return;
     }
@@ -943,7 +955,10 @@ details.more[open] summary{margin-bottom:10px}
     db.enablePersistence({synchronizeTabs: true}).catch(() => {});
   } catch (err) { db = null; loaded = true; render(); }
   if (db) {
-    auth.onAuthStateChanged(u => { user = u; if (!u) S.keeper = false; render(); });
+    auth.onAuthStateChanged(u => {
+      if (!u) { user = null; S.keeper = false; render(); return; }
+      checkAccess(u).then(ok => { if (ok) { user = u; render(); } else { user = null; S.keeper = false; auth.signOut(); render(); } });
+    });
     db.collection(COL.c).doc('rules').onSnapshot(d => { CFG = d.exists ? (d.data() || {}) : {}; render(); }, () => {});
     db.collection(COL.g).onSnapshot(q => { const next = {}; q.docs.forEach(d => { next[d.id] = d.data(); }); G = next; if (loaded) render(); }, () => {});
     db.collection(COL.m).onSnapshot(q => {

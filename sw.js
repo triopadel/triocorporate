@@ -3,7 +3,7 @@
 // Bump VERSION whenever you upload new files, so phones drop the old copies.
 // Several tournament sites share acepadel.github.io, so this only ever deletes its own "trio-" caches.
 const PREFIX = 'trio-';
-const VERSION = PREFIX + 'v1';
+const VERSION = PREFIX + 'v2';
 const SHELL = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-48.png'];
 
 self.addEventListener('install', event => {
